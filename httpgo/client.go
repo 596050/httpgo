@@ -5,19 +5,29 @@ import (
 	"net/http"
 )
 
-type httpClient struct{}
+type httpClient struct {
+	Headers http.Header
+}
 
-func New() HttpClient {
+// New instantiates an httpClient and returns it
+func New() HTTPClient {
 	client := &httpClient{}
 	return client
 }
 
-type HttpClient interface {
+// HTTPClient is implemented by httpClient
+type HTTPClient interface {
+	SetHeaders(headers http.Header)
+
 	Get(url string, headers http.Header) (*http.Response, error)
 	Post(url string, headers http.Header, body io.Reader) (*http.Response, error)
 	Put(url string, headers http.Header, body io.Reader) (*http.Response, error)
 	Patch(url string, headers http.Header, body io.Reader) (*http.Response, error)
 	Delete(url string, headers http.Header) (*http.Response, error)
+}
+
+func (c *httpClient) SetHeaders(headers http.Header) {
+	c.Headers = headers
 }
 
 func (c *httpClient) Get(url string, headers http.Header) (*http.Response, error) {
