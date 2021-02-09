@@ -11,12 +11,6 @@ type httpClient struct {
 	Headers http.Header
 }
 
-// New instantiates an httpClient and returns it
-func New() HTTPClient {
-	client := &httpClient{}
-	return client
-}
-
 // HTTPClient is implemented by httpClient
 type HTTPClient interface {
 	SetHeaders(headers http.Header)
@@ -46,4 +40,10 @@ func (c *httpClient) Patch(url string, headers http.Header, body Body) (*http.Re
 }
 func (c *httpClient) Delete(url string, headers http.Header) (*http.Response, error) {
 	return c.do(http.MethodDelete, url, headers, nil)
+}
+
+// New instantiates an httpClient and returns it
+func New() HTTPClient {
+	client := &httpClient{}
+	return client
 }
