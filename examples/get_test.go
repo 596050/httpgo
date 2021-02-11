@@ -4,14 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/596050/httpgo/httpgo"
 )
 
-func TestGetEndpoints(t *testing.T) {
+func TestMain(m *testing.M) {
+	fmt.Println("Testing package")
+	// mock http requests
 	httpgo.StartMockServer()
+	os.Exit(m.Run())
+}
+
+func TestGetEndpoints(t *testing.T) {
+
 	t.Run("TestErrorFetchingFromGithub", func(t *testing.T) {
 		// Initialization
 		httpgo.AddMock(httpgo.Mock{
