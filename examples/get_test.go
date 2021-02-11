@@ -12,14 +12,13 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	fmt.Println("Testing package")
+	fmt.Println("Testing package...")
 	// mock http requests with ONE server
 	httpgo.StartMockServer()
 	os.Exit(m.Run())
 }
 
 func TestGetEndpoints(t *testing.T) {
-
 	t.Run("TestErrorFetchingFromGithub", func(t *testing.T) {
 		// Initialization
 		httpgo.FlushMocks()
