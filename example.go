@@ -2,17 +2,21 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/596050/httpgo/httpgo"
 )
 
-func getClientGithub() httpgo.HTTPClient {
-	client := httpgo.New()
+func getClientGithub() httpgo.Client {
+
 	commonHeaders := make(http.Header)
-	commonHeaders.Set("Authorization", "Bearer ABC-123")
-	client.SetHeaders(commonHeaders)
+	client := httpgo.NewBuilder().
+		SetConnectionTimeout(2 * time.Second).
+		SetResponseTimeout(5 * time.Second).
+		SetHeaders(commonHeaders).
+		Build()
+
 	return client
 }
 
@@ -22,31 +26,31 @@ var (
 
 // get
 func getGithubUrls() {
-	headers := make(http.Header)
-	headers.Set("Authorization", "Bearer ABC-123")
-	resp, err := httpClientGithub.Get("https://api.github.com", headers)
+	resp, err := httpClientGithub.Get("https://api.github.com", nil)
 	if err != nil {
 		panic(err)
 	}
-	bytes, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(bytes))
+	fmt.Println(string(resp.Body()))
 }
 
 // post
-type user struct {
+type User struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 }
 
-func createUser(user user) {
+func createUser(user User) {
 	headers := make(http.Header)
 	headers.Set("Authorization", "Bearer ABC-123")
 	resp, err := httpClientGithub.Post("https://api.github.com", headers, user)
 	if err != nil {
 		panic(err)
 	}
-	bytes, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(bytes))
+	var data User
+	if err := resp.UnmarshalJSON(&data); err != nil {
+		panic(err)
+	}
+	fmt.Println(data)
 }
 
 func main() {

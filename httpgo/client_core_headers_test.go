@@ -20,7 +20,10 @@ func TestGetRequestHeaders(t *testing.T) {
 	for key, value := range commonHeadersTestCases {
 		commonHeaders.Set(key, value)
 	}
-	client.Headers = commonHeaders
+
+	client.builder = &clientBuilder{
+		headers: commonHeaders,
+	}
 
 	// Execution
 	requestHeaders := make(http.Header)

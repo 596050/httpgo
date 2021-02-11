@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -14,7 +16,7 @@ func (c *httpClient) getRequestHeaders(requestHeaders http.Header) http.Header {
 	result := make(http.Header)
 
 	// add common headers to the request
-	for header, value := range c.Headers {
+	for header, value := range c.builder.headers {
 		// headers should have value of length one
 		if len(value) > 0 {
 			result.Set(header, value[0])
@@ -48,9 +50,29 @@ func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, erro
 	}
 }
 
+func (c *httpClient) getHTTPClient() *http.Client {
+	c.clientOnce.Do(func() {
+		c.client = &http.Client{
+			Timeout: c.builder.connectionTimeout + c.builder.responseTimeout,
+			// should allow for configuring according to traffic patterns
+			Transport: &http.Transport{
+				// maximum idle (keep-alive) connections to keep per-host
+				MaxIdleConnsPerHost: c.builder.maxIdleConnections,
+				// amount of time to wait for a server's response headers after fully writing the request (including its body, if any). This time does not include the time to read the response body.
+				ResponseHeaderTimeout: c.builder.responseTimeout,
+				// maximum amount of time to wait for a given connection
+				DialContext: (&net.Dialer{
+					Timeout: c.builder.connectionTimeout,
+				}).DialContext,
+			},
+		}
+	})
+
+	return c.client
+}
+
 // do is a private method which makes the http request
-func (c *httpClient) do(method string, url string, headers http.Header, body Body) (*http.Response, error) {
-	client := http.Client{}
+func (c *httpClient) do(method string, url string, headers http.Header, body Body) (*Response, error) {
 	// handle headers
 	fullHeaders := c.getRequestHeaders(headers)
 	// handle body
@@ -58,13 +80,38 @@ func (c *httpClient) do(method string, url string, headers http.Header, body Bod
 	if err != nil {
 		return nil, err
 	}
+
+	if mock := mockupServer.getMock(method, url, string(requestBody)); mock != nil {
+		return mock.GetResponse()
+	}
+
 	// create request
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, errors.New("unable to create a new request")
 	}
 
+	client := c.getHTTPClient()
+
 	// set headers on request
 	req.Header = fullHeaders
-	return client.Do(req)
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	finalResponse := Response{
+		status:     response.Status,
+		statusCode: response.StatusCode,
+		header:     response.Header,
+		body:       responseBody,
+	}
+
+	return &finalResponse, nil
 }

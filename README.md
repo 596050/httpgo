@@ -1,6 +1,6 @@
 # Description
 
-This is a simple http client which can abstract the usage of an http package
+This is a simple http client for abstracting usage of an http package. This improves the process of testing endpoints, allowing for the client to be mocked simply.
 
 # Usage
 
