@@ -35,7 +35,16 @@ func StopMockServer() {
 	mockupServer.enabled = false
 }
 
+func FlushMocks() {
+	// a single routine can flush at a time
+	mockupServer.serverMutext.Lock()
+	defer mockupServer.serverMutext.Unlock()
+
+	mockupServer.mocks = make(map[string]*Mock)
+}
+
 func AddMock(mock Mock) {
+	// a single routine can add at a time
 	mockupServer.serverMutext.Lock()
 	defer mockupServer.serverMutext.Unlock()
 
