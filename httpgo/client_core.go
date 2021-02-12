@@ -11,27 +11,6 @@ import (
 	"strings"
 )
 
-// allows for both common and custom headers
-func (c *httpClient) getRequestHeaders(requestHeaders http.Header) http.Header {
-	result := make(http.Header)
-
-	// add common headers to the request
-	for header, value := range c.builder.headers {
-		// headers should have value of length one
-		if len(value) > 0 {
-			result.Set(header, value[0])
-		}
-	}
-	// add custom headers to the request
-	for header, value := range requestHeaders {
-		// headers should have value of length one
-		if len(value) > 0 {
-			result.Set(header, value[0])
-		}
-	}
-	return result
-}
-
 // marshals body to encoding based on the content type header
 func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, error) {
 	if body == nil {
@@ -52,6 +31,11 @@ func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, erro
 
 func (c *httpClient) getHTTPClient() *http.Client {
 	c.clientOnce.Do(func() {
+		if c.builder.client != nil {
+			c.client = c.builder.client
+			return
+		}
+
 		c.client = &http.Client{
 			Timeout: c.builder.connectionTimeout + c.builder.responseTimeout,
 			// should allow for configuring according to traffic patterns

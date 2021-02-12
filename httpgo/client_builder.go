@@ -11,6 +11,8 @@ type clientBuilder struct {
 	connectionTimeout  time.Duration
 	responseTimeout    time.Duration
 	headers            http.Header
+	baseUrl            string
+	client             *http.Client
 }
 
 // ClientBuilder uses builder pattern for configuration
@@ -24,19 +26,13 @@ type ClientBuilder interface {
 
 	// create http client
 	Build() Client
+	SetHttpClient(c *http.Client) ClientBuilder
 }
 
 // NewBuilder instantiates an httpClient
 func NewBuilder() ClientBuilder {
 	builder := &clientBuilder{}
 	return builder
-}
-
-func (c *clientBuilder) Build() Client {
-	client := httpClient{
-		builder: c,
-	}
-	return &client
 }
 
 // headers
@@ -58,5 +54,18 @@ func (c *clientBuilder) SetResponseTimeout(timeout time.Duration) ClientBuilder 
 
 func (c *clientBuilder) SetMaxIdleConnections(numConnections int) ClientBuilder {
 	c.maxIdleConnections = numConnections
+	return c
+}
+
+// create http client
+func (c *clientBuilder) Build() Client {
+	client := httpClient{
+		builder: c,
+	}
+	return &client
+}
+
+func (c *clientBuilder) SetHttpClient(client *http.Client) ClientBuilder {
+	c.client = client
 	return c
 }
