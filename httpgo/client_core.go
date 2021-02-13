@@ -9,28 +9,9 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/596050/httpgo/gomime"
 )
-
-// allows for both common and custom headers
-func (c *httpClient) getRequestHeaders(requestHeaders http.Header) http.Header {
-	result := make(http.Header)
-
-	// add common headers to the request
-	for header, value := range c.builder.headers {
-		// headers should have value of length one
-		if len(value) > 0 {
-			result.Set(header, value[0])
-		}
-	}
-	// add custom headers to the request
-	for header, value := range requestHeaders {
-		// headers should have value of length one
-		if len(value) > 0 {
-			result.Set(header, value[0])
-		}
-	}
-	return result
-}
 
 // marshals body to encoding based on the content type header
 func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, error) {
@@ -39,10 +20,10 @@ func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, erro
 	}
 	// custom content type management
 	switch strings.ToLower(contentType) {
-	case "application/json":
+	case gomime.ContentTypeJSON:
 		return json.Marshal(body)
 
-	case "application/xml":
+	case gomime.ContentTypeXML:
 		return xml.Marshal(body)
 
 	default:
@@ -52,6 +33,11 @@ func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, erro
 
 func (c *httpClient) getHTTPClient() *http.Client {
 	c.clientOnce.Do(func() {
+		if c.builder.client != nil {
+			c.client = c.builder.client
+			return
+		}
+
 		c.client = &http.Client{
 			Timeout: c.builder.connectionTimeout + c.builder.responseTimeout,
 			// should allow for configuring according to traffic patterns
@@ -75,6 +61,7 @@ func (c *httpClient) getHTTPClient() *http.Client {
 func (c *httpClient) do(method string, url string, headers http.Header, body Body) (*Response, error) {
 	// handle headers
 	fullHeaders := c.getRequestHeaders(headers)
+
 	// handle body
 	requestBody, err := c.getRequestBody(fullHeaders.Get("Content-Type"), body)
 	if err != nil {
