@@ -9,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/596050/httpgo/gomime"
 )
 
 // marshals body to encoding based on the content type header
@@ -18,10 +20,10 @@ func (c *httpClient) getRequestBody(contentType string, body Body) ([]byte, erro
 	}
 	// custom content type management
 	switch strings.ToLower(contentType) {
-	case "application/json":
+	case gomime.ContentTypeJSON:
 		return json.Marshal(body)
 
-	case "application/xml":
+	case gomime.ContentTypeXML:
 		return xml.Marshal(body)
 
 	default:
@@ -59,6 +61,7 @@ func (c *httpClient) getHTTPClient() *http.Client {
 func (c *httpClient) do(method string, url string, headers http.Header, body Body) (*Response, error) {
 	// handle headers
 	fullHeaders := c.getRequestHeaders(headers)
+
 	// handle body
 	requestBody, err := c.getRequestBody(fullHeaders.Get("Content-Type"), body)
 	if err != nil {

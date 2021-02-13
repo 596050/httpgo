@@ -1,6 +1,10 @@
 package httpgo
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/596050/httpgo/gomime"
+)
 
 func getHeaders(headers ...http.Header) http.Header {
 	if len(headers) > 0 {
@@ -27,5 +31,13 @@ func (c *httpClient) getRequestHeaders(requestHeaders http.Header) http.Header {
 			result.Set(header, value[0])
 		}
 	}
+
+	// set User-Agent
+	if c.builder.userAgent != "" {
+		if result.Get(gomime.HeaderUserAgent) == "" {
+			result.Set(gomime.HeaderUserAgent, c.builder.userAgent)
+		}
+	}
+
 	return result
 }

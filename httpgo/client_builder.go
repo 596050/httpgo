@@ -13,10 +13,13 @@ type clientBuilder struct {
 	headers            http.Header
 	baseUrl            string
 	client             *http.Client
+	userAgent          string
 }
 
 // ClientBuilder uses builder pattern for configuration
 type ClientBuilder interface {
+	// user agent
+	SetUserAgent(userAgent string) ClientBuilder
 	// headers
 	SetHeaders(headers http.Header) ClientBuilder
 	// timeouts
@@ -33,6 +36,12 @@ type ClientBuilder interface {
 func NewBuilder() ClientBuilder {
 	builder := &clientBuilder{}
 	return builder
+}
+
+// user agent
+func (c *clientBuilder) SetUserAgent(userAgent string) ClientBuilder {
+	c.userAgent = userAgent
+	return c
 }
 
 // headers
